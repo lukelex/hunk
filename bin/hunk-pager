@@ -7,5 +7,13 @@ if ! command -v delta >/dev/null 2>&1; then
 fi
 
 here=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
+theme=${HUNK_THEME:-$(git config --get hunk.theme || true)}
+theme=${theme:-default}
+case "$theme" in
+  default|railscasts) ;;
+  *) printf 'hunk: unknown theme: %s\n' "$theme" >&2; exit 2 ;;
+esac
+# Delta's environment selector takes precedence over --features.
+export DELTA_FEATURES="$theme"
 exec delta --config "$here/../share/hunk/delta.gitconfig" \
-  --pager 'less --tabs=4 -RFX' "$@"
+  --features "$theme" --pager 'less --tabs=4 -RFX' "$@"

@@ -16,7 +16,7 @@ class HunkIntegration(unittest.TestCase):
     self.repo = Path(self.temp.name) / "repo"
     self.repo.mkdir()
     self.env = dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull,
-                    GIT_CONFIG_NOSYSTEM="1", DELTA_FEATURES="")
+                    GIT_CONFIG_NOSYSTEM="1", DELTA_FEATURES="", HUNK_THEME="")
     self.run_cmd("git", "init", "-q")
     self.run_cmd("git", "config", "user.name", "Test")
     self.run_cmd("git", "config", "user.email", "test@example.com")
@@ -98,3 +98,21 @@ class HunkIntegration(unittest.TestCase):
     result = self.run_cmd(str(prefix / "bin/hunk-pager"), "--paging=never", input=patch)
     self.assertIn("sample.txt", result.stdout)
     self.assertIn("after", result.stdout)
+
+  def test_railscasts_theme_and_environment_override(self):
+    (self.repo / "sample.txt").write_text("color = red\ncontext\n")
+    self.run_cmd("git", "add", "sample.txt")
+    self.run_cmd("git", "commit", "-qm", "add shared deletion context")
+    (self.repo / "sample.txt").write_text("color = orange\ncontext\n")
+    self.run_cmd("git", "config", "hunk.theme", "railscasts")
+    patch = self.run_cmd("git", "diff").stdout
+    args = (str(ROOT / "bin/hunk-pager"), "--paging=never", "--true-color=always")
+    themed = self.run_cmd(*args, input=patch).stdout
+    self.assertIn("38;2;135;175;95", themed)  # Railscasts DiffAdd
+    self.assertIn("38;2;204;120;51", themed)  # Railscasts dark_orange line
+    self.assertIn("38;2;218;73;57", themed)  # Railscasts DiffDelete
+    self.env["HUNK_THEME"] = "default"
+    default = self.run_cmd(*args, input=patch).stdout
+    self.assertNotIn("38;2;135;175;95", default)
+    strip = lambda text: re.sub(r"\x1b\[[0-9;]*m", "", text)
+    self.assertEqual(strip(themed), strip(default))

@@ -52,6 +52,24 @@ The preset lives in `share/hunk/delta.gitconfig`. Explicit pager arguments such
 as `hunk-pager --light` override it. The pager falls back to less if Delta is
 missing. Context selection belongs to Git, not the formatter.
 
+## Themes
+
+The default theme follows your terminal's ANSI colors. The `railscasts` theme
+uses the palette from [railscasts.nvim](https://github.com/lukelex/railscasts.nvim):
+warm file headers, cyan locations, gray context, green additions, and warm
+orange removal lines. The actual removed words use bold red over its darker
+background. The layout
+stays the same. RGB colors render exactly on true-color terminals; Delta
+approximates them on 256-color terminals.
+
+```sh
+git config --global hunk.theme railscasts
+HUNK_THEME=default git hunk             # temporary override
+```
+
+`HUNK_THEME` overrides `hunk.theme`; without either, Hunk uses `default`.
+Both palettes ship with Hunk, so no Neovim theme installation is required.
+
 ## Development
 
 Run `make test` with Python 3 and Delta installed. Run ShellCheck on `bin/*`.

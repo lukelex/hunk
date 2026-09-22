@@ -3,12 +3,19 @@
   side-by-side = false
   line-numbers = false
   keep-plus-minus-markers = true
-  file-style = bold normal
   file-decoration-style = none
-  hunk-header-style = dim normal line-number
-  hunk-header-line-number-style = dim normal
   hunk-header-decoration-style = none
   hunk-label = "@@ "
+  commit-style = raw
+  commit-decoration-style = none
+  tabs = 4
+  width = variable
+  max-line-length = 0
+
+[delta "default"]
+  file-style = bold normal
+  hunk-header-style = dim normal line-number
+  hunk-header-line-number-style = dim normal
   inline-hint-style = dim normal
   minus-style = red normal
   plus-style = green normal
@@ -16,8 +23,17 @@
   plus-emph-style = green bold 22
   zero-style = dim normal
   whitespace-error-style = magenta reverse
-  commit-style = raw
-  commit-decoration-style = none
-  tabs = 4
-  width = variable
-  max-line-length = 0
+
+# Palette: lukelex/railscasts.nvim, lua/railscasts/colors.lua.
+# Addition/removal/change colors match its DiffAdd/DiffDelete/DiffChange groups.
+[delta "railscasts"]
+  file-style = "bold #E6E1DC"
+  hunk-header-style = "#6D9CBE line-number"
+  hunk-header-line-number-style = "#6D9CBE"
+  inline-hint-style = "#6D9CBE"
+  minus-style = "#CC7833 normal"
+  plus-style = "#87AF5F normal"
+  minus-emph-style = "bold #DA4939 #1F1F1F"
+  plus-emph-style = "bold #87AF5F #1F1F1F"
+  zero-style = "#7C6F64 normal"
+  whitespace-error-style = "reverse #DA4939"
