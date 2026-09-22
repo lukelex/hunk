@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">Hunk logo</title>
+  <desc id="desc">A warm white H on a dark rounded square, with a red minus and green plus representing a Git diff.</desc>
+  <rect width="160" height="160" rx="32" fill="#1f1f1f"/>
+  <path d="M40 36h18v35h44V36h18v88h-18V89H58v35H40Z" fill="#e6e1dc"/>
+  <path d="M70 49h20" fill="none" stroke="#da4939" stroke-width="6" stroke-linecap="round"/>
+  <path d="M70 111h20m-10-10v20" fill="none" stroke="#87af5f" stroke-width="6" stroke-linecap="round"/>
+</svg>
