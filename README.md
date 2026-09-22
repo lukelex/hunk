@@ -14,6 +14,8 @@ Requires Git, Bash, GNU coreutils, less, and Delta (tested with 0.19.2).
 On Arch, install `git-delta`. From this repository:
 
 ```sh
+git clone https://github.com/lukelex/hunk.git
+cd hunk
 make install                         # ~/.local; put ~/.local/bin on PATH
 # Or: sudo make install PREFIX=/usr/local
 ```

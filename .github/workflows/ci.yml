@@ -16,4 +16,5 @@ jobs:
           tar -xzf delta-0.19.2-x86_64-unknown-linux-musl.tar.gz
           install -Dm755 delta-0.19.2-x86_64-unknown-linux-musl/delta "$HOME/.local/bin/delta"
       - run: make test
+      - run: sudo apt-get update && sudo apt-get install -y shellcheck
       - run: shellcheck -S error bin/*
