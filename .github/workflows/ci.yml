@@ -1,0 +1,19 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Delta
+        run: |
+          curl -fsSLO https://github.com/dandavison/delta/releases/download/0.19.2/delta-0.19.2-x86_64-unknown-linux-musl.tar.gz
+          echo 'f1ea01ca7728ce3462debc359f39dfc7cbbc1a63224b71fefabf92042864aa1b  delta-0.19.2-x86_64-unknown-linux-musl.tar.gz' | sha256sum --check
+          tar -xzf delta-0.19.2-x86_64-unknown-linux-musl.tar.gz
+          install -Dm755 delta-0.19.2-x86_64-unknown-linux-musl/delta "$HOME/.local/bin/delta"
+      - run: make test
+      - run: shellcheck -S error bin/*

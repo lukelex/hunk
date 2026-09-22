@@ -1,0 +1,23 @@
+[delta]
+  dark = true
+  side-by-side = false
+  line-numbers = false
+  keep-plus-minus-markers = true
+  file-style = bold normal
+  file-decoration-style = none
+  hunk-header-style = dim normal line-number
+  hunk-header-line-number-style = dim normal
+  hunk-header-decoration-style = none
+  hunk-label = "@@ "
+  inline-hint-style = dim normal
+  minus-style = red normal
+  plus-style = green normal
+  minus-emph-style = red bold 52
+  plus-emph-style = green bold 22
+  zero-style = dim normal
+  whitespace-error-style = magenta reverse
+  commit-style = raw
+  commit-decoration-style = none
+  tabs = 4
+  width = variable
+  max-line-length = 0
