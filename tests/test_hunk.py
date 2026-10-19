@@ -69,7 +69,7 @@ class HunkIntegration(unittest.TestCase):
     # An addition in the index and deletion in the worktree need separate colors.
     (self.repo / "added file.txt").unlink()
     (self.repo / "untracked\nname.txt").write_text("new\n")
-    code, actual = self.status_tty()
+    code, actual = self.status_tty("--short")
     self.assertEqual(code, 0)
     expected = self.run_cmd("git", "-c", "color.status=false", "status", "--short").stdout
     self.assertEqual(re.sub(rb"\x1b\[[0-9;]*m", b"", actual).decode(), expected)
@@ -81,27 +81,83 @@ class HunkIntegration(unittest.TestCase):
     self.run_cmd("git", "restore", "sample.txt")
     self.run_cmd("git", "mv", "sample.txt", "renamed.txt")
     self.run_cmd("git", "config", "hunk.theme", "railscasts")
-    code, actual = self.status_tty()
+    code, actual = self.status_tty("--short")
     self.assertEqual(code, 0)
     self.assertIn(b"\x1b[38;2;109;156;190mR", actual)
     self.assertIn(b"sample.txt -> renamed.txt", actual)
     self.env["HUNK_THEME"] = "default"
-    self.assertIn(b"\x1b[94mR", self.status_tty()[1])
+    self.assertIn(b"\x1b[94mR", self.status_tty("--short")[1])
 
   def test_status_machine_output_and_redirect(self):
     for args in ((), ("--porcelain",), ("--porcelain=v2",), ("-bz",), ("--long",)):
-      expected = self.run_cmd("git", "-c", "color.status=false", "status", "--short", *args)
+      expected = self.run_cmd("git", "-c", "color.status=false", "status", *args)
       actual = self.run_cmd(str(ROOT / "bin/git-hunk"), "status", *args)
       self.assertEqual(actual.stdout, expected.stdout)
       if args:
         code, output = self.status_tty(*args)
         self.assertEqual(code, 0)
-        self.assertEqual(output.decode(), expected.stdout)
+        self.assertEqual(re.sub(rb"\x1b\[[0-9;]*m", b"", output).decode(), expected.stdout)
+
+  def test_status_default_preserves_long_sections_and_colors(self):
+    (self.repo / "added.txt").write_text("new\n")
+    self.run_cmd("git", "add", "added.txt")
+    (self.repo / "untracked.txt").write_text("untracked\n")
+    code, actual = self.status_tty()
+    self.assertEqual(code, 0)
+    expected = self.run_cmd("git", "-c", "color.status=false", "status", "--long").stdout
+    self.assertEqual(re.sub(rb"\x1b\[[0-9;]*m", b"", actual).decode(), expected)
+    for heading in (b"On branch", b"Changes to be committed:",
+                    b"Changes not staged for commit:", b"Untracked files:"):
+      self.assertIn(heading, actual)
+    self.assertIn(b"\x1b[32mnew file:", actual)
+    self.assertIn(b"\x1b[94mmodified:", actual)
+    self.assertIn(b"\tuntracked.txt\n", actual)
 
   def test_status_reports_git_errors(self):
     code, output = self.status_tty("--invalid-option")
     self.assertNotEqual(code, 0)
     self.assertEqual(output, b"")
+
+  def test_status_merge_conflicts_and_resolution(self):
+    self.run_cmd("git", "restore", "sample.txt")
+    (self.repo / "deleted.txt").write_text("base\n")
+    self.run_cmd("git", "add", ".")
+    self.run_cmd("git", "commit", "-qm", "merge base")
+    branch = self.run_cmd("git", "branch", "--show-current").stdout.strip()
+    self.run_cmd("git", "checkout", "-qb", "incoming")
+    for name in ("sample.txt", "added.txt", "deleted.txt"):
+      (self.repo / name).write_text("theirs\n")
+    self.run_cmd("git", "add", ".")
+    self.run_cmd("git", "commit", "-qm", "incoming changes")
+    self.run_cmd("git", "checkout", "-q", branch)
+    for name in ("sample.txt", "added.txt"):
+      (self.repo / name).write_text("ours\n")
+    self.run_cmd("git", "rm", "deleted.txt")
+    self.run_cmd("git", "add", ".")
+    self.run_cmd("git", "commit", "-qm", "local changes")
+    self.assertEqual(self.run_cmd("git", "merge", "incoming", check=False).returncode, 1)
+
+    for theme, red in (("default", b"31"), ("railscasts", b"38;2;218;73;57")):
+      self.env["HUNK_THEME"] = theme
+      code, actual = self.status_tty()
+      self.assertEqual(code, 0)
+      expected = self.run_cmd("git", "-c", "color.status=false", "status").stdout
+      self.assertEqual(re.sub(rb"\x1b\[[0-9;]*m", b"", actual).decode(), expected)
+      self.assertIn(b"Unmerged paths:", actual)
+      for label in (b"both modified:", b"both added:", b"deleted by us:"):
+        self.assertIn(b"\t\x1b[" + red + b"m" + label, actual)
+      short = self.status_tty("--short")[1]
+      for x, y in ((b"U", b"U"), (b"A", b"A"), (b"D", b"U")):
+        self.assertIn(b"\x1b[" + red + b"m" + x + b"\x1b[m"
+                      + b"\x1b[" + red + b"m" + y + b"\x1b[m", short)
+
+    (self.repo / "sample.txt").write_text("resolved\n")
+    self.run_cmd("git", "add", "sample.txt")
+    self.env["HUNK_THEME"] = "default"
+    actual = self.status_tty()[1]
+    self.assertIn(b"Changes to be committed:", actual)
+    self.assertIn(b"\x1b[94mmodified:   sample.txt", actual)
+    self.assertIn(b"Unmerged paths:", actual)
 
   def test_renderer_preserves_file_metadata(self):
     self.run_cmd("git", "mv", "sample.txt", "renamed file.txt")

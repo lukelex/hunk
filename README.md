@@ -82,21 +82,28 @@ its normal meaning. Short terminal diffs remain visible; longer ones use less.
 ### Color status by change type
 
 ```sh
-git hunk status                   # compact status with staged/unstaged columns
-git hunk status --branch          # include branch information
+git hunk status                   # branch summary and grouped changes
+git hunk status --short           # compact staged/unstaged columns
 git hunk status -- path/to/file   # limit to a path
 ```
 
 Modified and renamed files are blue, added files green, and deleted files red.
 The default theme uses bright ANSI blue and ANSI green/red; Railscasts uses
 `#6D9CBE`, `#87AF5F`, and `#DA4939`. Both honor `hunk.theme` and `HUNK_THEME`.
-The left status column describes staged changes; the right describes unstaged
-changes. Each column gets its own change-type color. If both have changes, the
-filename uses the unstaged change's color. Conflicts are red, copies green,
+The default layout keeps Git's branch summary, staged, unstaged, and untracked
+sections, including its hints. With `--short`, the left status column describes
+staged changes; the right describes unstaged changes. Each column gets its own
+change-type color. If both have changes, the filename uses the unstaged change's
+color. Conflicts are red, copies green,
 type changes blue, and untracked/ignored entries neutral.
 
-Arguments go to `git status`, with short output by default. Redirects,
-`--porcelain`, `-z`, and `--long` bypass Hunk coloring. Ordinary `git status`
+Merge conflicts stay in Git's **Unmerged paths** section with their original
+labels and resolution hints. Every conflicted entry is red, including “both
+added” and delete/modify conflicts. After resolution and `git add` (or `git rm`),
+Git moves the entry out of that section and its normal change-type color applies.
+
+Arguments go to `git status`, with long output by default. Redirects,
+`--porcelain` and `-z` bypass Hunk coloring. Ordinary `git status`
 continues to use Git's own configuration.
 
 ### Make Hunk your default pager (optional)
