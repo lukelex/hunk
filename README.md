@@ -106,6 +106,22 @@ Arguments go to `git status`, with long output by default. Redirects,
 `--porcelain` and `-z` bypass Hunk coloring. Ordinary `git status`
 continues to use Git's own configuration.
 
+#### Replace `git status` (optional)
+
+Git's built-in `status` command cannot be overridden with a Git alias. Hunk can
+set up an interactive Bash or Zsh shell function to route `git status` through
+Hunk. Run:
+
+```sh
+git hunk setup-status
+```
+
+The command prints the function and asks before appending it to `~/.bashrc` or
+`$ZDOTDIR/.zshrc` (or `~/.zshrc` if `ZDOTDIR` is unset). It changes only
+`git status`; other Git commands pass through unchanged. Remove the marked
+function from that startup file, or run `unset -f git` in the current shell, to
+restore normal behavior. Without opting in, `git status` is unaffected.
+
 ### Make Hunk your default pager (optional)
 
 To use the same presentation for `git diff` and `git show`:

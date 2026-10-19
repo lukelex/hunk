@@ -3,6 +3,54 @@ set -euo pipefail
 
 # Let Git own argument parsing, exit status, and non-terminal output.
 here=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
+if [[ ${1:-} == setup-status ]]; then
+  shift
+  if (($#)); then
+    printf 'usage: git hunk setup-status\n' >&2
+    exit 2
+  fi
+
+  case "${SHELL##*/}" in
+    bash) rc_file=${BASHRC:-${HOME}/.bashrc} ;;
+    zsh) rc_file=${ZDOTDIR:-${HOME}}/.zshrc ;;
+    *) rc_file= ;;
+  esac
+
+  marker='# hunk: replace git status'
+  read -r -d '' integration <<'EOF' || true
+# hunk: replace git status
+git() {
+  if [[ ${1-} == status ]]; then
+    shift
+    command git hunk status "$@"
+  else
+    command git "$@"
+  fi
+}
+EOF
+  printf '%s\n' "$integration"
+  if [[ -z $rc_file ]]; then
+    printf '\nCould not identify Bash or Zsh from $SHELL; add the function above manually.\n' >&2
+    exit 1
+  fi
+  if [[ -f $rc_file ]] && grep -Fq "$marker" "$rc_file"; then
+    printf '\nHunk status integration is already present in %s.\n' "$rc_file"
+    exit 0
+  fi
+  printf '\nAppend this function to %s? [y/N] ' "$rc_file" >&2
+  if ! read -r answer </dev/tty 2>/dev/null || [[ ! $answer =~ ^([yY]|[yY][eE][sS])$ ]]; then
+    printf 'No changes made.\n' >&2
+    exit 0
+  fi
+  mkdir -p "$(dirname "$rc_file")"
+  if [[ -s $rc_file ]] && [[ $(tail -c 1 "$rc_file" | wc -l) -eq 0 ]]; then
+    printf '\n' >>"$rc_file"
+  fi
+  printf '%s\n' "$integration" >>"$rc_file"
+  printf 'Added Hunk status integration to %s. Restart your shell or source the file to enable it.\n' "$rc_file"
+  exit 0
+fi
+
 if [[ ${1:-} == status ]]; then
   shift
   exec "$here/git-hunk-status" "$@"
