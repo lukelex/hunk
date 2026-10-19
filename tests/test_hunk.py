@@ -1,4 +1,5 @@
 import os
+import pty
 from pathlib import Path
 import re
 import subprocess
@@ -38,6 +39,69 @@ class HunkIntegration(unittest.TestCase):
     self.run_cmd("git", "add", ".")
     staged = self.run_cmd(str(ROOT / "bin/git-hunk"), "--cached").stdout
     self.assertEqual(staged, expected)
+
+  def status_tty(self, *args):
+    master, slave = pty.openpty()
+    try:
+      result = subprocess.run([str(ROOT / "bin/git-hunk"), "status", *args],
+                              cwd=self.repo, env=self.env, stdout=slave,
+                              stderr=subprocess.PIPE)
+      os.close(slave)
+      slave = None
+      chunks = []
+      while True:
+        try:
+          chunk = os.read(master, 65536)
+        except OSError:
+          break
+        if not chunk:
+          break
+        chunks.append(chunk)
+      return result.returncode, b"".join(chunks).replace(b"\r\n", b"\n")
+    finally:
+      os.close(master)
+      if slave is not None:
+        os.close(slave)
+
+  def test_status_colors_preserve_git_columns_and_paths(self):
+    (self.repo / "added file.txt").write_text("new\n")
+    self.run_cmd("git", "add", "added file.txt")
+    # An addition in the index and deletion in the worktree need separate colors.
+    (self.repo / "added file.txt").unlink()
+    (self.repo / "untracked\nname.txt").write_text("new\n")
+    code, actual = self.status_tty()
+    self.assertEqual(code, 0)
+    expected = self.run_cmd("git", "-c", "color.status=false", "status", "--short").stdout
+    self.assertEqual(re.sub(rb"\x1b\[[0-9;]*m", b"", actual).decode(), expected)
+    self.assertIn(b"\x1b[94mM\x1b[m", actual)
+    self.assertIn(b"\x1b[32mA\x1b[m\x1b[31mD\x1b[m", actual)
+    self.assertIn(b'\x1b[31m"added file.txt"\x1b[m', actual)
+
+  def test_status_rename_theme_and_override(self):
+    self.run_cmd("git", "restore", "sample.txt")
+    self.run_cmd("git", "mv", "sample.txt", "renamed.txt")
+    self.run_cmd("git", "config", "hunk.theme", "railscasts")
+    code, actual = self.status_tty()
+    self.assertEqual(code, 0)
+    self.assertIn(b"\x1b[38;2;109;156;190mR", actual)
+    self.assertIn(b"sample.txt -> renamed.txt", actual)
+    self.env["HUNK_THEME"] = "default"
+    self.assertIn(b"\x1b[94mR", self.status_tty()[1])
+
+  def test_status_machine_output_and_redirect(self):
+    for args in ((), ("--porcelain",), ("--porcelain=v2",), ("-bz",), ("--long",)):
+      expected = self.run_cmd("git", "-c", "color.status=false", "status", "--short", *args)
+      actual = self.run_cmd(str(ROOT / "bin/git-hunk"), "status", *args)
+      self.assertEqual(actual.stdout, expected.stdout)
+      if args:
+        code, output = self.status_tty(*args)
+        self.assertEqual(code, 0)
+        self.assertEqual(output.decode(), expected.stdout)
+
+  def test_status_reports_git_errors(self):
+    code, output = self.status_tty("--invalid-option")
+    self.assertNotEqual(code, 0)
+    self.assertEqual(output, b"")
 
   def test_renderer_preserves_file_metadata(self):
     self.run_cmd("git", "mv", "sample.txt", "renamed file.txt")

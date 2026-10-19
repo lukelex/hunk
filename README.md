@@ -23,11 +23,11 @@ exit codes, and paging; redirected output remains an original Git patch.
 
 ### 1. Install dependencies
 
-You need Git, Bash, GNU coreutils (including `realpath` and `install`), Make,
+You need Git, Bash, Python 3.9+, GNU coreutils (including `realpath` and `install`), Make,
 less, and Delta (tested with 0.19.2). On Arch Linux:
 
 ```sh
-sudo pacman -S --needed git bash coreutils make less git-delta
+sudo pacman -S --needed git bash python coreutils make less git-delta
 ```
 
 For other systems, install these tools with your package manager and follow
@@ -60,7 +60,7 @@ sudo make install PREFIX=/usr/local
 ```
 
 Packaging tools can use `make install PREFIX=/usr DESTDIR="$pkgdir"`.
-The two executables and `share/hunk/delta.gitconfig` form a self-contained
+The three executables and `share/hunk/delta.gitconfig` form a self-contained
 installation.
 
 ## Use
@@ -74,9 +74,30 @@ git hunk HEAD~1                  # compare working tree with the previous commit
 git hunk -U8 -- path/to/file      # eight context lines, limited to one file
 ```
 
-All arguments go to `git diff`. Hunk defaults to two context lines. Git handles
+Except for the `status` subcommand, all arguments go to `git diff`. Use
+`git hunk -- status` to diff a file named `status`. Hunk defaults to two context lines. Git handles
 paging itself, so redirects produce original patches and `--exit-code` keeps
 its normal meaning. Short terminal diffs remain visible; longer ones use less.
+
+### Color status by change type
+
+```sh
+git hunk status                   # compact status with staged/unstaged columns
+git hunk status --branch          # include branch information
+git hunk status -- path/to/file   # limit to a path
+```
+
+Modified and renamed files are blue, added files green, and deleted files red.
+The default theme uses bright ANSI blue and ANSI green/red; Railscasts uses
+`#6D9CBE`, `#87AF5F`, and `#DA4939`. Both honor `hunk.theme` and `HUNK_THEME`.
+The left status column describes staged changes; the right describes unstaged
+changes. Each column gets its own change-type color. If both have changes, the
+filename uses the unstaged change's color. Conflicts are red, copies green,
+type changes blue, and untracked/ignored entries neutral.
+
+Arguments go to `git status`, with short output by default. Redirects,
+`--porcelain`, `-z`, and `--long` bypass Hunk coloring. Ordinary `git status`
+continues to use Git's own configuration.
 
 ### Make Hunk your default pager (optional)
 
@@ -144,5 +165,6 @@ Use the same `PREFIX` you used when installing.
 
 ## Development
 
-Run `make test` with Python 3 and Delta installed. Run ShellCheck on `bin/*`.
+Run `make test` with Python 3 and Delta installed. Run
+`shellcheck bin/git-hunk bin/hunk-pager` for the Bash wrappers.
 After editing, run `make install` again to refresh a copied installation.

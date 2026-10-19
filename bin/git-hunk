@@ -3,6 +3,10 @@ set -euo pipefail
 
 # Let Git own argument parsing, exit status, and non-terminal output.
 here=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
+if [[ ${1:-} == status ]]; then
+  shift
+  exec "$here/git-hunk-status" "$@"
+fi
 printf -v GIT_PAGER '%q' "$here/hunk-pager"
 export GIT_PAGER
 exec git -c diff.context=2 --paginate diff "$@"
