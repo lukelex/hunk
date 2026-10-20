@@ -1,5 +1,4 @@
 [delta]
-  dark = true
   side-by-side = false
   line-numbers = false
   keep-plus-minus-markers = true
@@ -13,6 +12,7 @@
   max-line-length = 0
 
 [delta "default"]
+  dark = true
   file-style = bold normal
   hunk-header-style = normal line-number
   hunk-header-line-number-style = "#888888"
@@ -27,6 +27,7 @@
 # Palette: lukelex/railscasts.nvim, lua/railscasts/colors.lua.
 # Addition/removal/change colors match its DiffAdd/DiffDelete/DiffChange groups.
 [delta "railscasts"]
+  dark = true
   file-style = "bold #E6E1DC"
   hunk-header-style = "#BDC3C7 line-number"
   hunk-header-line-number-style = "#8A8178"
@@ -37,3 +38,16 @@
   plus-emph-style = "bold #A5C779 #283D28"
   zero-style = "#A79B90 normal"
   whitespace-error-style = "reverse #DA4939"
+
+[delta "light"]
+  light = true
+  file-style = "bold #24292F"
+  hunk-header-style = "#424A53 line-number"
+  hunk-header-line-number-style = "#68717A"
+  inline-hint-style = "#68717A"
+  minus-style = "#A12622 normal"
+  plus-style = "#236B35 normal"
+  minus-emph-style = "bold #82071E #FFCECB"
+  plus-emph-style = "bold #116329 #CCFFD8"
+  zero-style = "#626B74 normal"
+  whitespace-error-style = "reverse #A12622"

@@ -10,13 +10,14 @@ powered by [Delta](https://github.com/dandavison/delta).
 Hunk adds a `git hunk` command and a reusable Git pager. It pairs a small Bash
 wrapper with a Delta preset so you can focus on changed lines:
 
-- **One bold path per file**, with dim hunk locations and surrounding context.
+- **Bold filenames and muted directories**, with quieter hunk locations and readable context.
+- **Compact per-file `+12 −4` totals** and consistent whitespace between files.
 - **Red/green changes and word-level emphasis**, keeping the familiar `+`/`-` markers.
 - **Useful file metadata**, including renames, additions, deletions, and mode changes.
 - **A compact layout** with two context lines by default, without boxes,
   full-width rules, line-number gutters, or side-by-side columns.
 
-The built-in themes target dark terminals. Git still handles diff arguments,
+The default and Railscasts themes target dark terminals; `light` targets light backgrounds. Git still handles diff arguments,
 exit codes, and paging; redirected output remains an original Git patch.
 
 ## Install
@@ -60,7 +61,7 @@ sudo make install PREFIX=/usr/local
 ```
 
 Packaging tools can use `make install PREFIX=/usr DESTDIR="$pkgdir"`.
-The three executables and `share/hunk/delta.gitconfig` form a self-contained
+The four executables and `share/hunk/delta.gitconfig` form a self-contained
 installation.
 
 ## Use
@@ -84,6 +85,7 @@ its normal meaning. Short terminal diffs remain visible; longer ones use less.
 ```sh
 git hunk status                   # branch summary and grouped changes
 git hunk status --short           # compact staged/unstaged columns
+git hunk status --hints           # Git's detailed layout and guidance
 git hunk status -- path/to/file   # limit to a path
 ```
 
@@ -91,19 +93,22 @@ Modified and renamed files are blue, added files green, and deleted files red.
 The default theme uses bright ANSI blue and ANSI green/red; Railscasts uses
 `#6D9CBE`, `#87AF5F`, and `#DA4939`. Untracked paths are light gray (ANSI bright
 white by default, `#BDC3C7` in Railscasts). Both honor `hunk.theme` and `HUNK_THEME`.
-The default layout keeps Git's branch summary, staged, unstaged, and untracked
-sections, including its hints. With `--short`, the left status column describes
+The default layout keeps Git's branch summary and uses counted **Staged**,
+**Unstaged**, **Untracked**, and **Conflicts** groups. Aligned `mod`, `new`,
+`del`, `ren`, `cpy`, and `typ` labels identify changes without relying on color.
+Filenames are bold and directories muted. Use `--hints` or `--long` for Git's
+detailed sections and instructional hints. With `--short`, the left status column describes
 staged changes; the right describes unstaged changes. Each column gets its own
 change-type color. If both have changes, the filename uses the unstaged change's
 color. Conflicts are red, copies green,
 type changes blue, and untracked/ignored entries neutral.
 
-Merge conflicts stay in Git's **Unmerged paths** section with their original
-labels and resolution hints. Every conflicted entry is red, including “both
+Merge conflicts retain their precise descriptions in **Conflicts** (`--long`
+uses Git's **Unmerged paths** section and resolution hints). Every conflicted entry is red, including “both
 added” and delete/modify conflicts. After resolution and `git add` (or `git rm`),
 Git moves the entry out of that section and its normal change-type color applies.
 
-Arguments go to `git status`, with long output by default. Redirects,
+Arguments other than `--hints` go to `git status`. Redirects,
 `--porcelain` and `-z` bypass Hunk coloring. Ordinary `git status`
 continues to use Git's own configuration.
 
@@ -148,21 +153,26 @@ missing. Context selection belongs to Git, not the formatter.
 
 ## Themes
 
-The default theme follows your terminal's ANSI colors. The `railscasts` theme
+The default theme uses your terminal's ANSI change colors and a readable gray
+for context. The `railscasts` theme
 uses the palette from [railscasts.nvim](https://github.com/lukelex/railscasts.nvim):
 warm file headers, cyan locations, gray context, green additions, and warm
 orange removal lines. The actual removed words use bold red over its darker
-background. The layout
+red-tinted background; added words get a green-tinted highlight. The layout
 stays the same. RGB colors render exactly on true-color terminals; Delta
 approximates them on 256-color terminals.
 
 ```sh
 git config --global hunk.theme railscasts
+git config --global hunk.theme light   # for light terminal backgrounds
 HUNK_THEME=default git hunk             # temporary override
 ```
 
 `HUNK_THEME` overrides `hunk.theme`; without either, Hunk uses `default`.
-Both palettes ship with Hunk, so no Neovim theme installation is required.
+All three palettes ship with Hunk, so no Neovim theme installation is required.
+The light palette uses dark red/green text, pale word-level highlights, and
+medium-gray context. File totals count visible added/removed lines in the default
+unified layout; binary and metadata-only changes retain their descriptive labels.
 
 ## Uninstall
 

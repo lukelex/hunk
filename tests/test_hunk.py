@@ -125,6 +125,30 @@ class HunkIntegration(unittest.TestCase):
     self.assertNotEqual(code, 0)
     self.assertEqual(output, b"")
 
+  def test_compact_groups_counts_and_quoted_paths(self):
+    (self.repo / "src").mkdir()
+    (self.repo / "src/new.txt").write_text("new\n")
+    self.run_cmd("git", "add", "src/new.txt")
+    (self.repo / "odd\nname.txt").write_text("untracked\n")
+    code, output = self.status_tty()
+    self.assertEqual(code, 0)
+    plain = re.sub(rb"\x1b\[[0-9;]*m", b"", output)
+    for heading in ("Staged · 1", "Unstaged · 1", "Untracked · 1"):
+      self.assertIn(heading.encode(), plain)
+    self.assertIn(b"  new  src/new.txt", plain)
+    self.assertIn(b'    ?  "odd\\nname.txt"', plain)
+    self.assertIn(b"\x1b[2msrc/", output)
+
+  def test_multiple_file_summaries_and_spacing(self):
+    (self.repo / "other.txt").write_text("one\ntwo\n")
+    self.run_cmd("git", "add", "other.txt")
+    patch = self.run_cmd("git", "diff", "HEAD").stdout
+    output = self.run_cmd(str(ROOT / "bin/hunk-pager"), "--paging=never", input=patch).stdout
+    plain = re.sub(r"\x1b\[[0-9;]*m", "", output)
+    self.assertIn("added: other.txt  +2 −0", plain)
+    self.assertIn("\n\nsample.txt  +1 −1", plain)
+    self.assertNotIn("\n\n\nsample.txt", plain)
+
   def test_status_merge_conflicts_and_resolution(self):
     self.run_cmd("git", "restore", "sample.txt")
     (self.repo / "deleted.txt").write_text("base\n")
@@ -250,3 +274,14 @@ class HunkIntegration(unittest.TestCase):
     self.assertNotIn("38;2;135;175;95", default)
     strip = lambda text: re.sub(r"\x1b\[[0-9;]*m", "", text)
     self.assertEqual(strip(themed), strip(default))
+
+  def test_light_theme(self):
+    self.env["HUNK_THEME"] = "light"
+    patch = self.run_cmd("git", "diff").stdout
+    result = self.run_cmd(str(ROOT / "bin/hunk-pager"), "--paging=never",
+                          "--true-color=always", input=patch)
+    self.assertIn("38;2;35;107;53", result.stdout)
+    self.assertIn("38;2;98;107;116", result.stdout)
+    code, status = self.status_tty()
+    self.assertEqual(code, 0)
+    self.assertIn(b"\x1b[34m", status)
