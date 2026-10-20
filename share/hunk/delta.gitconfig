@@ -14,8 +14,8 @@
 
 [delta "default"]
   file-style = bold normal
-  hunk-header-style = dim normal line-number
-  hunk-header-line-number-style = dim normal
+  hunk-header-style = normal line-number
+  hunk-header-line-number-style = "#888888"
   inline-hint-style = dim normal
   minus-style = red normal
   plus-style = green normal
@@ -28,8 +28,8 @@
 # Addition/removal/change colors match its DiffAdd/DiffDelete/DiffChange groups.
 [delta "railscasts"]
   file-style = "bold #E6E1DC"
-  hunk-header-style = "#6D9CBE line-number"
-  hunk-header-line-number-style = "#6D9CBE"
+  hunk-header-style = "#BDC3C7 line-number"
+  hunk-header-line-number-style = "#8A8178"
   inline-hint-style = "#6D9CBE"
   minus-style = "#CC7833 normal"
   plus-style = "#87AF5F normal"
