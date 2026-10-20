@@ -89,7 +89,8 @@ git hunk status -- path/to/file   # limit to a path
 
 Modified and renamed files are blue, added files green, and deleted files red.
 The default theme uses bright ANSI blue and ANSI green/red; Railscasts uses
-`#6D9CBE`, `#87AF5F`, and `#DA4939`. Both honor `hunk.theme` and `HUNK_THEME`.
+`#6D9CBE`, `#87AF5F`, and `#DA4939`. Untracked paths are light gray (ANSI bright
+white by default, `#BDC3C7` in Railscasts). Both honor `hunk.theme` and `HUNK_THEME`.
 The default layout keeps Git's branch summary, staged, unstaged, and untracked
 sections, including its hints. With `--short`, the left status column describes
 staged changes; the right describes unstaged changes. Each column gets its own

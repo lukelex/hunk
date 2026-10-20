@@ -76,6 +76,7 @@ class HunkIntegration(unittest.TestCase):
     self.assertIn(b"\x1b[94mM\x1b[m", actual)
     self.assertIn(b"\x1b[32mA\x1b[m\x1b[31mD\x1b[m", actual)
     self.assertIn(b'\x1b[31m"added file.txt"\x1b[m', actual)
+    self.assertIn(b'\x1b[97m"untracked\\nname.txt"\x1b[m', actual)
 
   def test_status_rename_theme_and_override(self):
     self.run_cmd("git", "restore", "sample.txt")
@@ -111,7 +112,8 @@ class HunkIntegration(unittest.TestCase):
       self.assertIn(heading, actual)
     self.assertIn(b"\x1b[32mnew file:", actual)
     self.assertIn(b"\x1b[94mmodified:", actual)
-    self.assertIn(b"\tuntracked.txt\n", actual)
+    self.assertIn(b"\t\x1b[97muntracked.txt\x1b[m\n", actual)
+    self.assertNotIn(b"\x1b[97m", actual.split(b"Untracked files:", 1)[0])
 
   def test_status_reports_git_errors(self):
     code, output = self.status_tty("--invalid-option")
