@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+"""Apply file-path hierarchy to Delta output before paging."""
+
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+
+
+ANSI = re.compile(rb"\x1b\[[0-9;]*m")
+
+
+def main():
+  args = sys.argv[1:]
+  paging = "auto"
+  forwarded = []
+  index = 0
+  while index < len(args):
+    arg = args[index]
+    if arg == "--paging":
+      index += 1
+      paging = args[index] if index < len(args) else "invalid"
+    elif arg.startswith("--paging="):
+      paging = arg.split("=", 1)[1]
+    else:
+      forwarded.append(arg)
+    index += 1
+  if paging not in ("auto", "always", "never"):
+    print("hunk: invalid paging mode", file=sys.stderr)
+    return 2
+  config = Path(__file__).resolve().parent.parent / "share/hunk/delta.gitconfig"
+  # A private style identifies file headers without guessing from their text.
+  custom = any(arg.startswith(("--file-style", "--raw", "--color-only",
+                               "--show-", "--list-", "--help", "--version"))
+               or arg in ("-h", "-V") for arg in forwarded)
+  marker = [] if custom else ["--file-style", "bold 201"]
+  result = subprocess.run(["delta", "--config", str(config), *marker,
+                           *forwarded, "--paging=never"], stdout=subprocess.PIPE)
+  if result.returncode:
+    sys.stdout.buffer.write(result.stdout)
+    return result.returncode
+  output = []
+  for line in result.stdout.splitlines(keepends=True):
+    if not custom and line.startswith(b"\x1b[1;38;5;201m"):
+      text = ANSI.sub(b"", line).rstrip(b"\n")
+      # Keep rename/copy metadata and style each path independently.
+      parts = re.split("( +⟶ +)".encode(), text)
+      styled = []
+      for index, part in enumerate(parts):
+        if index % 2:
+          styled.append(part)
+          continue
+        directory, slash, name = part.rpartition(b"/")
+        styled.append((b"\x1b[2m" + directory + slash + b"\x1b[22m" if slash else b"")
+                      + b"\x1b[1m" + name + b"\x1b[m")
+      line = b"".join(styled) + b"\n"
+    output.append(line)
+  data = b"".join(output)
+  if paging == "always" or (paging == "auto" and sys.stdout.isatty()):
+    return subprocess.run(["less", "--tabs=4", "-RFX"], input=data).returncode
+  sys.stdout.buffer.write(data)
+  return 0
+
+
+if __name__ == "__main__":
+  try:
+    sys.exit(main())
+  except BrokenPipeError:
+    os._exit(0)

@@ -15,5 +15,4 @@ case "$theme" in
 esac
 # Delta's environment selector takes precedence over --features.
 export DELTA_FEATURES="$theme"
-exec delta --config "$here/../share/hunk/delta.gitconfig" \
-  --features "$theme" --pager 'less --tabs=4 -RFX' "$@"
+exec "$here/hunk-render" --features "$theme" "$@"

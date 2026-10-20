@@ -179,6 +179,12 @@ class HunkIntegration(unittest.TestCase):
     self.assertNotIn("index ", plain)
 
   def test_renderer_labels_removed_files(self):
+    (self.repo / "src").mkdir()
+    self.run_cmd("git", "mv", "sample.txt", "src/sample.txt")
+    patch = self.run_cmd("git", "diff", "--cached").stdout
+    result = self.run_cmd(str(ROOT / "bin/hunk-pager"), "--paging=never", input=patch)
+    self.assertIn("\x1b[2msrc/\x1b[22m\x1b[1msample.txt", result.stdout)
+    self.run_cmd("git", "reset", "--hard", "HEAD")
     self.run_cmd("git", "rm", "-f", "sample.txt")
     patch = self.run_cmd("git", "diff", "--cached").stdout
     result = self.run_cmd(str(ROOT / "bin/hunk-pager"), "--paging=never", input=patch)
