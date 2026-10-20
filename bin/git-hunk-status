@@ -10,6 +10,10 @@ import sys
 def main():
   args = sys.argv[1:]
   options = args[:args.index("--")] if "--" in args else args
+  hints = "--hints" in options
+  if hints:
+    args.remove("--hints")
+    options = args[:args.index("--")] if "--" in args else args
   # Machine formats and redirected output belong entirely to Git.
   raw = any((arg.startswith("-") and not arg.startswith("--") and "z" in arg)
             or arg == "--null"
@@ -34,7 +38,12 @@ def main():
       if theme == "railscasts" else ("94", "32", "31", "97"))
   colors = {"M": blue, "T": blue, "R": blue, "A": green, "C": green,
             "D": red}
-  result = subprocess.run(command, stdout=subprocess.PIPE)
+  compact = not hints and not any(arg in ("--long", "--short", "--verbose")
+                                  or (arg.startswith("-") and not arg.startswith("--")
+                                      and any(flag in arg for flag in "sv"))
+                                  for arg in options)
+  result = subprocess.run(command, stdout=subprocess.PIPE,
+                          env=dict(os.environ, LC_ALL="C"))
   if result.returncode:
     return result.returncode
 
@@ -43,6 +52,31 @@ def main():
 
   labels = {b"modified": blue, b"typechange": blue, b"renamed": blue,
             b"new file": green, b"copied": green, b"deleted": red}
+  if compact:
+    headings = {b"Changes to be committed:": b"Staged",
+                b"Changes not staged for commit:": b"Unstaged",
+                b"Untracked files:": b"Untracked",
+                b"Unmerged paths:": b"Conflicts",
+                b"Ignored files:": b"Ignored"}
+    groups = []
+    preamble = []
+    for line in result.stdout.splitlines():
+      if line in headings:
+        groups.append((headings[line], []))
+      elif groups and line.startswith(b"\t"):
+        groups[-1][1].append(line[1:])
+      elif not groups and line and not line.lstrip().startswith(b"("):
+        preamble.append(line)
+    output = [b"\n".join(preamble)]
+    for heading, entries in groups:
+      output.append(b"")
+      output.append(paint(heading + " · ".encode() + str(len(entries)).encode(), "1"))
+      for entry in entries:
+        label, sep, path = entry.partition(b":")
+        color = red if heading == b"Conflicts" else labels.get(label, light_gray)
+        output.append(b"  " + paint(entry, color))
+    sys.stdout.buffer.write(b"\n".join(output) + b"\n")
+    return 0
   section = None
   untracked_section = False
   for line in result.stdout.splitlines(keepends=True):

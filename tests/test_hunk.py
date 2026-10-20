@@ -103,7 +103,7 @@ class HunkIntegration(unittest.TestCase):
     (self.repo / "added.txt").write_text("new\n")
     self.run_cmd("git", "add", "added.txt")
     (self.repo / "untracked.txt").write_text("untracked\n")
-    code, actual = self.status_tty()
+    code, actual = self.status_tty("--long")
     self.assertEqual(code, 0)
     expected = self.run_cmd("git", "-c", "color.status=false", "status", "--long").stdout
     self.assertEqual(re.sub(rb"\x1b\[[0-9;]*m", b"", actual).decode(), expected)
@@ -116,6 +116,11 @@ class HunkIntegration(unittest.TestCase):
     self.assertNotIn(b"\x1b[97m", actual.split(b"Untracked files:", 1)[0])
 
   def test_status_reports_git_errors(self):
+    code, output = self.status_tty()
+    self.assertEqual(code, 0)
+    self.assertIn("Unstaged · 1".encode(), output)
+    self.assertNotIn(b"git add", output)
+    self.assertIn(b"git add", self.status_tty("--hints")[1])
     code, output = self.status_tty("--invalid-option")
     self.assertNotEqual(code, 0)
     self.assertEqual(output, b"")
@@ -141,7 +146,7 @@ class HunkIntegration(unittest.TestCase):
 
     for theme, red in (("default", b"31"), ("railscasts", b"38;2;218;73;57")):
       self.env["HUNK_THEME"] = theme
-      code, actual = self.status_tty()
+      code, actual = self.status_tty("--long")
       self.assertEqual(code, 0)
       expected = self.run_cmd("git", "-c", "color.status=false", "status").stdout
       self.assertEqual(re.sub(rb"\x1b\[[0-9;]*m", b"", actual).decode(), expected)
@@ -156,7 +161,7 @@ class HunkIntegration(unittest.TestCase):
     (self.repo / "sample.txt").write_text("resolved\n")
     self.run_cmd("git", "add", "sample.txt")
     self.env["HUNK_THEME"] = "default"
-    actual = self.status_tty()[1]
+    actual = self.status_tty("--long")[1]
     self.assertIn(b"Changes to be committed:", actual)
     self.assertIn(b"\x1b[94mmodified:   sample.txt", actual)
     self.assertIn(b"Unmerged paths:", actual)
