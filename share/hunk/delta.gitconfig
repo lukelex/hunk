@@ -19,8 +19,8 @@
   inline-hint-style = dim normal
   minus-style = red normal
   plus-style = green normal
-  minus-emph-style = red bold 52
-  plus-emph-style = green bold 22
+  minus-emph-style = brightred bold 52
+  plus-emph-style = brightgreen bold 22
   zero-style = dim normal
   whitespace-error-style = magenta reverse
 
@@ -33,7 +33,7 @@
   inline-hint-style = "#6D9CBE"
   minus-style = "#CC7833 normal"
   plus-style = "#87AF5F normal"
-  minus-emph-style = "bold #DA4939 #1F1F1F"
-  plus-emph-style = "bold #87AF5F #1F1F1F"
+  minus-emph-style = "bold #DA4939 #402828"
+  plus-emph-style = "bold #A5C779 #283D28"
   zero-style = "#7C6F64 normal"
   whitespace-error-style = "reverse #DA4939"
