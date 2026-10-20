@@ -74,7 +74,18 @@ def main():
       for entry in entries:
         label, sep, path = entry.partition(b":")
         color = red if heading == b"Conflicts" else labels.get(label, light_gray)
-        output.append(b"  " + paint(entry, color))
+        short_labels = {b"modified": b"mod", b"new file": b"new",
+                        b"deleted": b"del", b"renamed": b"ren",
+                        b"copied": b"cpy", b"typechange": b"typ"}
+        if heading in (b"Untracked", b"Ignored"):
+          tag, path = (b"?" if heading == b"Untracked" else b"!"), entry
+        elif heading == b"Conflicts":
+          tag, path = b"UU", entry  # Retain Git's precise conflict description.
+        else:
+          tag, path = short_labels.get(label, label), path.lstrip()
+        directory, slash, name = path.rpartition(b"/")
+        styled_path = (paint(directory + slash, "2") if slash else b"") + paint(name, "1;" + color)
+        output.append(b"  " + paint(tag.rjust(3), color) + b"  " + styled_path)
     sys.stdout.buffer.write(b"\n".join(output) + b"\n")
     return 0
   section = None
