@@ -43,6 +43,11 @@ def main():
   output = []
   for line in result.stdout.splitlines(keepends=True):
     if not custom and line.startswith(b"\x1b[1;38;5;201m"):
+      # Normalize Delta's spacing to one blank line before each file.
+      while output and not ANSI.sub(b"", output[-1]).strip():
+        output.pop()
+      if output:
+        output.append(b"\n")
       text = ANSI.sub(b"", line).rstrip(b"\n")
       # Keep rename/copy metadata and style each path independently.
       parts = re.split("( +⟶ +)".encode(), text)
