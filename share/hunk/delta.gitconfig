@@ -21,7 +21,7 @@
   plus-style = green normal
   minus-emph-style = brightred bold 52
   plus-emph-style = brightgreen bold 22
-  zero-style = dim normal
+  zero-style = "#9A9A9A normal"
   whitespace-error-style = magenta reverse
 
 # Palette: lukelex/railscasts.nvim, lua/railscasts/colors.lua.
@@ -35,5 +35,5 @@
   plus-style = "#87AF5F normal"
   minus-emph-style = "bold #DA4939 #402828"
   plus-emph-style = "bold #A5C779 #283D28"
-  zero-style = "#7C6F64 normal"
+  zero-style = "#A79B90 normal"
   whitespace-error-style = "reverse #DA4939"
