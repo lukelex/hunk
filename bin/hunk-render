@@ -41,13 +41,26 @@ def main():
     sys.stdout.buffer.write(result.stdout)
     return result.returncode
   output = []
+  header = None
+  added = removed = 0
+  in_hunk = False
+
+  def finish_file():
+    if header is not None and (added or removed):
+      summary = f"  +{added} −{removed}".encode()
+      output[header] = output[header].rstrip(b"\n") + b"\x1b[2m" + summary + b"\x1b[m\n"
+
   for line in result.stdout.splitlines(keepends=True):
     if not custom and line.startswith(b"\x1b[1;38;5;201m"):
+      finish_file()
+      added = removed = 0
+      in_hunk = False
       # Normalize Delta's spacing to one blank line before each file.
       while output and not ANSI.sub(b"", output[-1]).strip():
         output.pop()
       if output:
         output.append(b"\n")
+      header = len(output)
       text = ANSI.sub(b"", line).rstrip(b"\n")
       # Keep rename/copy metadata and style each path independently.
       parts = re.split("( +⟶ +)".encode(), text)
@@ -60,7 +73,17 @@ def main():
         styled.append((b"\x1b[2m" + directory + slash + b"\x1b[22m" if slash else b"")
                       + b"\x1b[1m" + name + b"\x1b[m")
       line = b"".join(styled) + b"\n"
+    else:
+      plain = ANSI.sub(b"", line)
+      if plain.startswith(b"@@ "):
+        in_hunk = True
+      elif plain.startswith(b"commit "):
+        in_hunk = False
+      elif in_hunk:
+        added += plain.startswith(b"+")
+        removed += plain.startswith(b"-")
     output.append(line)
+  finish_file()
   data = b"".join(output)
   if paging == "always" or (paging == "auto" and sys.stdout.isatty()):
     return subprocess.run(["less", "--tabs=4", "-RFX"], input=data).returncode

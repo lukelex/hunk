@@ -180,6 +180,7 @@ class HunkIntegration(unittest.TestCase):
       self.assertIn(text, plain)
     self.assertIn("+after", plain)
     self.assertIn("-before", plain)
+    self.assertIn("+1 −1", plain)
     self.assertNotIn("diff --git", plain)
     self.assertNotIn("index ", plain)
 
